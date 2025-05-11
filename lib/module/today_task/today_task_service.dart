@@ -1,5 +1,7 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:pranala_test/model/model_todo_list.dart';
+import 'package:pranala_test/utils/check_connection.dart';
 
 import '../../repository/todo_repository.dart';
 
@@ -12,15 +14,27 @@ class ToDayTaskService with ChangeNotifier {
   bool offline = false;
   int page = 1;
 
+  ToDayTaskService() {
+    _startMonitoring();
+  }
+
+  _startMonitoring() {
+    Connectivity().onConnectivityChanged.listen((event) {
+      checkConnection();
+    });
+
+    checkConnection();
+  }
+
   Future<void> getTodayTasksFirst(BuildContext context) async {
     isLoading = true;
     notifyListeners();
     var resp = await _todoRepository.getTodos(context, page: 1, limit: 10);
     if (resp.isNotEmpty) {
       todayTask = resp;
+      isLoading = false;
+      notifyListeners();
     }
-    isLoading = false;
-    notifyListeners();
   }
 
   Future<void> getTodayTasks(
@@ -39,5 +53,14 @@ class ToDayTaskService with ChangeNotifier {
     }
     isLoadingMore = false;
     notifyListeners();
+  }
+
+  Future<void> checkConnection() async {
+    final previousOffline = offline;
+    var resp = await CheckConnection().checkConnection();
+    offline = resp;
+    if (offline != previousOffline) {
+      notifyListeners();
+    }
   }
 }

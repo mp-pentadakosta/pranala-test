@@ -32,10 +32,10 @@ class _BodyTaskViewState extends State<_BodyTaskView> {
     scrollController_.addListener(() {
       if (scrollController_.position.pixels ==
               scrollController_.position.maxScrollExtent &&
-          !Provider.of<ToDayTaskService>(context).isLoadingMore) {
+          !context.read<ToDayTaskService>().isLoadingMore) {
         context.read<ToDayTaskService>().getTodayTasks(
           context,
-          pageData: Provider.of<ToDayTaskService>(context).page + 1,
+          pageData: context.read<ToDayTaskService>().page + 1,
         );
       }
     });
@@ -44,8 +44,7 @@ class _BodyTaskViewState extends State<_BodyTaskView> {
 
   @override
   Widget build(BuildContext context) {
-    final todayTaskService = Provider.of<ToDayTaskService>(context);
-    return Consumer(
+    return Consumer<ToDayTaskService>(
       builder:
           (context, value, child) => Container(
             padding: const EdgeInsets.symmetric(
@@ -53,21 +52,24 @@ class _BodyTaskViewState extends State<_BodyTaskView> {
               vertical: 24.0,
             ),
             child:
-                todayTaskService.isLoading
+                value.isLoading && value.todayTask.isEmpty
                     ? Center(child: CircularProgressIndicator())
                     : SingleChildScrollView(
                       controller: scrollController_,
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Container(),
-                          Container(),
-                          ...todayTaskService.todayTask.map(
+                          ...value.todayTask.map(
                             (e) => CardComponent(
                               status: e.completed,
                               title: e.title,
                             ),
                           ),
+                          if (value.isLoadingMore)
+                            const Padding(
+                              padding: EdgeInsets.only(top: 16.0),
+                              child: CircularProgressIndicator(),
+                            ),
                         ],
                       ),
                     ),
